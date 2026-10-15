@@ -6,14 +6,34 @@
 ## 一行用法
 
 ```sh
+# 国外 / 能直连 GitHub 的机器
 curl -sSL https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
   | COOKIE='UID=..; CID=..; SEID=..' sh -s 100
+
+# 国内机器：换成任意一个代理前缀（四个都已实测可取到本脚本）
+curl -sSL https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh -o /tmp/p115.sh
+sh /tmp/p115.sh 100
 ```
 
-想要交互式粘贴 cookie（不回显）：
+国内镜像前缀（拼在 `https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh` 前面）：
+
+| 前缀 | 备注 |
+| --- | --- |
+| `https://ghfast.top/` | 快，常用 |
+| `https://ghproxy.net/` | 稳 |
+| `https://gh-proxy.com/` | 备用 |
+| （jsDelivr） | `https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh`，不走 GitHub |
+
+多镜像自动重试（推荐，脚本下载失败会自动换下一个）：
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh -o /tmp/p115.sh
+for u in \
+  https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh \
+  https://ghfast.top/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
+  https://ghproxy.net/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
+  https://gh-proxy.com/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh ; do
+  curl -fsSL --max-time 30 "$u" -o /tmp/p115.sh && [ -s /tmp/p115.sh ] && break
+done
 sh /tmp/p115.sh 100
 ```
 
@@ -24,9 +44,10 @@ sh /tmp/p115.sh 100
    拉一份独立 CPython 3.12 + p115client（无 root、不动系统 python 和系统包）
 3. 造 100MB 随机数据（不会命中秒传，真跑网络）上传到 115 的 `/临时测速`
 4. 打印速度、判读，并输出一行 `RESULT host=.. speed=..MB/s` 方便多台机器对比
-5. 自清理：本地临时文件、115 上的测试文件、uv 缓存（uv 是本次装的连 uv 一起删）
+5. 自清理：本地临时文件、115 上的测试文件、uv 缓存与它装的 python（uv 是本次装的连 uv 一起删）
 
-国内默认走清华 PyPI 索引 + 南大 GitHub 镜像，失败自动回退官方源。
+国内环境已内置回退：pip 走清华索引、python 3.12 走南大 python-build-standalone 镜像、
+uv 二进制走 ghproxy，任一步失败自动换官方源。
 
 ## 环境变量
 
