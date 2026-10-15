@@ -274,7 +274,7 @@ run_local() { SIZE_MB="$SIZE_MB" MAX_SECONDS="$MAX_SECONDS" WORK_DIR="$WORK" COO
 
 if [ -n "$PY" ]; then
   say "→ 本机已有 p115client（$PY），直接用，不装任何东西"
-  run_local "$PY" "$PYFILE"
+  run_local "$PY" -W ignore "$PYFILE"
   CODE=$?
 else
   say "→ 本机 python 装不了 p115client（它要求 >=3.12），用 uv 拉一份独立的 3.12"
@@ -308,9 +308,9 @@ else
   say "  ✓ 环境就绪，开始测速"
   if [ "$TRY" = "cn" ]; then
     run_local env UV_PYTHON_PREFERENCE=only-managed UV_DEFAULT_INDEX="$TSINGHUA" UV_PYTHON_INSTALL_MIRROR="$NJU_MIRROR" \
-      "$UV" run --no-project --quiet --python 3.12 --with p115client python "$PYFILE"
+      "$UV" run --no-project --quiet --python 3.12 --with p115client python -W ignore "$PYFILE"
   else
-    run_local "$UV" run --no-project --quiet --python 3.12 --with p115client python "$PYFILE"
+    run_local "$UV" run --no-project --quiet --python 3.12 --with p115client python -W ignore "$PYFILE"
   fi
   CODE=$?
 fi
