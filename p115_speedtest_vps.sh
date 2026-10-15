@@ -16,9 +16,15 @@
 #  跑完自清理：本地测试文件、115 上的测试文件、uv 缓存（uv 是本次装的连 uv 一起删）
 #  环境变量：MAX_SECONDS=300 超时上限 | SIZE_MB 同第 1 个参数 | KEEP_UV=1 保留 uv
 #
-#  一行版（从 Gist 直接跑）：
+#  一行版（从 Gist/仓库直接跑）：
 #     curl -sSL <gist_raw_url> | COOKIE='UID=..; CID=..; SEID=..' sh -s 100
 #     （管道方式没法交互输入 cookie，必须用 COOKIE= 环境变量）
+#
+#  国内机器下载不了 raw.githubusercontent.com 时，换成任意一个代理前缀（都已实测可取到本脚本）：
+#     https://ghproxy.net/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh
+#     https://ghfast.top/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh
+#     https://gh-proxy.com/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh
+#     https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh
 # ============================================================================
 set -u
 
@@ -38,7 +44,8 @@ cleanup() {
   if [ "$UV_ADDED" = "1" ] && [ "${KEEP_UV:-0}" != "1" ]; then
     rm -f "$HOME/.local/bin/uv" 2>/dev/null
     rm -rf "$HOME/.cache/uv" 2>/dev/null
-    printf '%s\n' "✓ 顺手清理：uv 二进制 + uv 缓存（都是本次装的）"
+    rm -rf "$HOME/.local/share/uv" 2>/dev/null
+    printf '%s\n' "✓ 顺手清理：uv 二进制 + uv 缓存 + uv 下的 python（都是本次装的）"
   fi
 }
 trap cleanup EXIT INT TERM
@@ -282,11 +289,24 @@ else
   if command -v uv >/dev/null 2>&1; then UV="$(command -v uv)"
   elif [ -x "$HOME/.local/bin/uv" ]; then UV="$HOME/.local/bin/uv"
   else
-    say "  · 装 uv（官方脚本，无 root，装到 ~/.local/bin）…"
-    if curl -LsSf --max-time 90 https://astral.sh/uv/install.sh 2>/dev/null | sh >/dev/null 2>&1 && [ -x "$HOME/.local/bin/uv" ]; then
-      UV="$HOME/.local/bin/uv"; UV_ADDED=1
-    elif python3 -m pip install -q --user uv >/dev/null 2>&1 && [ -x "$HOME/.local/bin/uv" ]; then
-      UV="$HOME/.local/bin/uv"; UV_ADDED=1
+    say "  · 装 uv（无 root，装到 ~/.local/bin）…"
+    INSTALLER="$WORK/uv-install.sh"
+    for BASE in "" "https://ghproxy.net/https://github.com"; do
+      if curl -LsSf --max-time 90 https://astral.sh/uv/install.sh -o "$INSTALLER" 2>/dev/null && [ -s "$INSTALLER" ]; then
+        if env UV_INSTALLER_GITHUB_BASE_URL="$BASE" sh "$INSTALLER" >/dev/null 2>&1 && [ -x "$HOME/.local/bin/uv" ]; then
+          UV="$HOME/.local/bin/uv"; UV_ADDED=1; break
+        fi
+      fi
+    done
+    if [ -z "$UV" ]; then
+      for IDX in "$TSINGHUA" ""; do
+        if [ -n "$IDX" ]; then
+          python3 -m pip install -q --user -i "$IDX" uv >/dev/null 2>&1
+        else
+          python3 -m pip install -q --user uv >/dev/null 2>&1
+        fi
+        if [ -x "$HOME/.local/bin/uv" ]; then UV="$HOME/.local/bin/uv"; UV_ADDED=1; break; fi
+      done
     fi
   fi
   [ -n "$UV" ] || die "uv 装不上（连不上 astral.sh，也没 pip）。可手动装 uv 再重跑本脚本。"
