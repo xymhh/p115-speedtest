@@ -19,18 +19,19 @@ sh /tmp/p115.sh 100
 
 | 前缀 | 备注 |
 | --- | --- |
-| `https://ghfast.top/` | 快，常用 |
-| `https://ghproxy.net/` | 稳 |
-| `https://gh-proxy.com/` | 备用 |
-| （jsDelivr） | `https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh`，不走 GitHub |
+| `https://ghfast.top/` | 首选，实测已取到最新版 |
+| `https://gh-proxy.com/` | 首选，实测已取到最新版 |
+| `https://ghproxy.net/` | 备用（有缓存，可能滞后几小时） |
+| （jsDelivr） | `https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh`，不走 GitHub，但缓存可达 12h |
 
 多镜像自动重试（推荐，脚本下载失败会自动换下一个）：
 
 ```sh
 for u in \
-  https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh \
   https://ghfast.top/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
+  https://gh-proxy.com/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
   https://ghproxy.net/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh \
+  https://cdn.jsdelivr.net/gh/xymhh/p115-speedtest@main/p115_speedtest_vps.sh \
   https://gh-proxy.com/https://raw.githubusercontent.com/xymhh/p115-speedtest/main/p115_speedtest_vps.sh ; do
   curl -fsSL --max-time 30 "$u" -o /tmp/p115.sh && [ -s /tmp/p115.sh ] && break
 done
